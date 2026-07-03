@@ -8,7 +8,8 @@
       "PowerShell(Get-ChildItem D:\\\\FamTask\\\\src -Recurse -File | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace\\('D:\\\\FamTask\\\\',''\\) })",
       "PowerShell(mvn test -B 2>&1)",
       "PowerShell(Get-ChildItem D:\\\\FamTask\\\\frontend -Recurse -File | Where-Object { $_.FullName -notmatch 'node_modules' } | Select-Object -ExpandProperty FullName | ForEach-Object { $_.Replace\\('D:\\\\FamTask\\\\frontend\\\\',''\\) })",
-      "PowerShell(mvn clean package -B 2>&1)"
+      "PowerShell(mvn clean package -B 2>&1)",
+      "PowerShell(powershell -NoProfile -ExecutionPolicy Bypass -File \"d:\\\\FamTask\\\\scripts\\\\build-benchmark.ps1\")"
     ]
   }
 }

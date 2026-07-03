@@ -5,6 +5,9 @@
 *.war
 *.ear
 
+# Caches de build redirecionados para dentro do projeto (scripts/build-benchmark.ps1)
+/.buildcache/
+
 # Angular / Node build outputs
 /frontend/dist/
 /frontend/node_modules/
