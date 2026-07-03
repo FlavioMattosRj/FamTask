@@ -1,0 +1,375 @@
+<header class="cabecalho">
+  <h1>Tarefas Benchmark</h1>
+  <span class="subtitulo">Spring Boot REST + Angular + SQLite</span>
+</header>
+
+@if (erro(); as mensagemErro) {
+  <div class="faixa-erro" role="alert">⚠ {{ mensagemErro }}</div>
+}
+
+<main class="conteudo">
+  <!-- Coluna da lista de tarefas -->
+  <section class="painel painel-lista">
+    <div class="barra-acoes">
+      <button class="botao primario" type="button" (click)="abrirFormularioNova()">
+        + Nova tarefa
+      </button>
+      <div class="grupo-pesquisa">
+        <input
+          type="text"
+          placeholder="Pesquisar tarefas..."
+          [(ngModel)]="textoPesquisa"
+          (keyup.enter)="pesquisar()"
+        />
+        <button class="botao" type="button" (click)="pesquisar()">Pesquisar</button>
+        @if (resultadosPesquisa() !== null) {
+          <button class="botao" type="button" (click)="limparPesquisa()">Limpar</button>
+        }
+      </div>
+    </div>
+
+    @if (resultadosPesquisa(); as resultados) {
+      <h2>Resultado da pesquisa ({{ resultados.length }})</h2>
+      @if (resultados.length === 0) {
+        <p class="vazio">Nenhuma tarefa encontrada.</p>
+      }
+      <ul class="lista-plana">
+        @for (tarefa of resultados; track tarefa.id) {
+          <li>
+            <div
+              class="item-tarefa"
+              [class.selecionada]="tarefa.id === detalhe()?.id"
+              [class.concluida]="tarefa.estado === 'CONCLUIDA'"
+              [class.cancelada]="tarefa.estado === 'CANCELADA'"
+              (click)="selecionarTarefa(tarefa.id)"
+            >
+              <span class="titulo">{{ tarefa.titulo }}</span>
+              <span class="etiqueta estado estado-{{ tarefa.estado }}">
+                {{ rotuloEstado[tarefa.estado] }}
+              </span>
+              <span class="etiqueta prioridade prioridade-{{ tarefa.prioridade }}">
+                {{ rotuloPrioridade[tarefa.prioridade] }}
+              </span>
+              @if (tarefa.previstoPara) {
+                <span class="etiqueta data">📅 {{ tarefa.previstoPara | date: 'dd/MM/yyyy' }}</span>
+              }
+              @if (tarefa.bloqueada) {
+                <span class="etiqueta bloqueada">🔒 Bloqueada</span>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    } @else {
+      <h2>Tarefas</h2>
+      @if (arvore().length === 0) {
+        <p class="vazio">Nenhuma tarefa cadastrada. Crie a primeira com "+ Nova tarefa".</p>
+      }
+      <ul class="lista-arvore">
+        @for (tarefa of arvore(); track tarefa.id) {
+          <li>
+            <app-item-tarefa
+              [no]="tarefa"
+              [selecionadaId]="detalhe()?.id ?? null"
+              (selecionar)="selecionarTarefa($event)"
+            />
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <!-- Coluna de detalhes / formulario -->
+  <section class="painel painel-detalhe">
+    @if (modoFormulario(); as modo) {
+      <h2>
+        @if (modo === 'nova') {
+          Nova tarefa
+        } @else if (modo === 'subtarefa') {
+          Nova subtarefa de "{{ detalhe()?.titulo }}"
+        } @else {
+          Editar tarefa
+        }
+      </h2>
+      <form class="formulario" (ngSubmit)="salvarFormulario()">
+        <label>
+          Titulo *
+          <input type="text" name="titulo" [(ngModel)]="formularioTitulo" required />
+        </label>
+        <label>
+          Descricao
+          <textarea name="descricao" rows="3" [(ngModel)]="formularioDescricao"></textarea>
+        </label>
+        <label>
+          Prioridade
+          <select name="prioridade" [(ngModel)]="formularioPrioridade">
+            @for (prioridade of prioridades; track prioridade) {
+              <option [value]="prioridade">{{ rotuloPrioridade[prioridade] }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          Previsto para
+          <input type="date" name="previstoPara" [(ngModel)]="formularioPrevistoPara" />
+        </label>
+        <div class="acoes-formulario">
+          <button class="botao primario" type="submit">Salvar</button>
+          <button class="botao" type="button" (click)="cancelarFormulario()">Cancelar</button>
+        </div>
+      </form>
+    } @else if (detalhe(); as tarefa) {
+      <div class="cabecalho-detalhe">
+        <h2>{{ tarefa.titulo }}</h2>
+        <span class="etiqueta estado estado-{{ tarefa.estado }}">
+          {{ rotuloEstado[tarefa.estado] }}
+        </span>
+        <span class="etiqueta prioridade prioridade-{{ tarefa.prioridade }}">
+          {{ rotuloPrioridade[tarefa.prioridade] }}
+        </span>
+      </div>
+
+      <div class="acoes-tarefa">
+        @if (tarefa.estado === 'A_FAZER') {
+          <button class="botao primario" type="button" (click)="iniciarTarefa()">▶ Iniciar</button>
+        }
+        @if (tarefa.estado === 'EM_EXECUCAO') {
+          <button class="botao primario" type="button" (click)="concluirTarefa()">
+            ✔ Concluir
+          </button>
+        }
+        @if (tarefa.estado === 'A_FAZER' || tarefa.estado === 'EM_EXECUCAO') {
+          <button class="botao" type="button" (click)="cancelarTarefa()">✖ Cancelar tarefa</button>
+        }
+        <button class="botao" type="button" (click)="abrirFormularioSubtarefa()">
+          + Subtarefa
+        </button>
+        <button class="botao" type="button" (click)="abrirFormularioEdicao()">✎ Editar</button>
+        <button class="botao perigo" type="button" (click)="excluirTarefa()">🗑 Excluir</button>
+      </div>
+
+      @if (tarefa.descricao) {
+        <p class="descricao">{{ tarefa.descricao }}</p>
+      }
+
+      <dl class="datas">
+        <div>
+          <dt>Criada em</dt>
+          <dd>{{ tarefa.criadoEm | date: 'dd/MM/yyyy HH:mm' }}</dd>
+        </div>
+        <div>
+          <dt>Atualizada em</dt>
+          <dd>{{ tarefa.atualizadoEm | date: 'dd/MM/yyyy HH:mm' }}</dd>
+        </div>
+        @if (tarefa.previstoPara) {
+          <div>
+            <dt>Prevista para</dt>
+            <dd>{{ tarefa.previstoPara | date: 'dd/MM/yyyy' }}</dd>
+          </div>
+        }
+        @if (tarefa.iniciadoEm) {
+          <div>
+            <dt>Iniciada em</dt>
+            <dd>{{ tarefa.iniciadoEm | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+        }
+        @if (tarefa.concluidoEm) {
+          <div>
+            <dt>Concluida em</dt>
+            <dd>{{ tarefa.concluidoEm | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+        }
+        @if (tarefa.canceladoEm) {
+          <div>
+            <dt>Cancelada em</dt>
+            <dd>{{ tarefa.canceladoEm | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+        }
+      </dl>
+
+      @if (tarefa.bloqueios.length > 0) {
+        <h3>Bloqueios</h3>
+        <ul class="lista-bloqueios">
+          @for (bloqueio of tarefa.bloqueios; track $index) {
+            <li class="bloqueio bloqueio-{{ bloqueio.tipo }}">
+              {{ bloqueio.mensagem }}
+            </li>
+          }
+        </ul>
+      }
+
+      @if (tarefa.subtarefas.length > 0) {
+        <h3>Subtarefas ({{ tarefa.subtarefas.length }})</h3>
+        <ul class="lista-simples">
+          @for (subtarefa of tarefa.subtarefas; track subtarefa.id) {
+            <li class="linha">
+              <a href="javascript:void(0)" (click)="selecionarTarefa(subtarefa.id)">
+                {{ subtarefa.titulo }}
+              </a>
+              <span class="etiqueta estado estado-{{ subtarefa.estado }}">
+                {{ rotuloEstado[subtarefa.estado] }}
+              </span>
+            </li>
+          }
+        </ul>
+      }
+
+      <h3>Dependencias internas</h3>
+      @if (tarefa.dependenciasInternas.length === 0) {
+        <p class="vazio">Esta tarefa nao depende de outras tarefas.</p>
+      }
+      <ul class="lista-simples">
+        @for (dependencia of tarefa.dependenciasInternas; track dependencia.id) {
+          <li class="linha">
+            <span>
+              Depende de:
+              <a href="javascript:void(0)" (click)="selecionarTarefa(dependencia.dependeDeTarefaId)">
+                {{ dependencia.tituloTarefaDependencia }}
+              </a>
+            </span>
+            <span class="etiqueta estado estado-{{ dependencia.estadoTarefaDependencia }}">
+              {{ rotuloEstado[dependencia.estadoTarefaDependencia] }}
+            </span>
+            <button
+              class="botao pequeno perigo"
+              type="button"
+              (click)="removerDependencia(dependencia.id)"
+            >
+              Remover
+            </button>
+          </li>
+        }
+      </ul>
+      <div class="grupo-pesquisa">
+        <input
+          type="text"
+          placeholder="Pesquisar tarefa para adicionar como dependencia..."
+          [(ngModel)]="textoPesquisaDependencia"
+          (keyup.enter)="pesquisarDependencia()"
+        />
+        <button class="botao" type="button" (click)="pesquisarDependencia()">Pesquisar</button>
+      </div>
+      @if (candidatasDependencia(); as candidatas) {
+        @if (candidatas.length === 0) {
+          <p class="vazio">Nenhuma tarefa candidata encontrada.</p>
+        }
+        <ul class="lista-simples">
+          @for (candidata of candidatas; track candidata.id) {
+            <li class="linha">
+              <span>{{ candidata.titulo }}</span>
+              <span class="etiqueta estado estado-{{ candidata.estado }}">
+                {{ rotuloEstado[candidata.estado] }}
+              </span>
+              <button
+                class="botao pequeno primario"
+                type="button"
+                (click)="adicionarDependencia(candidata)"
+              >
+                Adicionar dependencia
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      <h3>Dependencias externas</h3>
+      @if (tarefa.dependenciasExternas.length === 0) {
+        <p class="vazio">Nenhuma dependencia externa cadastrada.</p>
+      }
+      <ul class="lista-simples">
+        @for (dependencia of tarefa.dependenciasExternas; track dependencia.id) {
+          <li class="linha externa" [class.resolvida]="dependencia.resolvida">
+            <div class="info-externa">
+              <span class="titulo-externa">
+                {{ dependencia.resolvida ? '✅' : '⏳' }} {{ dependencia.titulo }}
+              </span>
+              @if (dependencia.descricao) {
+                <span class="descricao-externa">{{ dependencia.descricao }}</span>
+              }
+              @if (dependencia.previstoPara) {
+                <span class="etiqueta data">
+                  📅 {{ dependencia.previstoPara | date: 'dd/MM/yyyy' }}
+                </span>
+              }
+            </div>
+            <div class="acoes-externa">
+              @if (!dependencia.resolvida) {
+                <button
+                  class="botao pequeno primario"
+                  type="button"
+                  (click)="resolverDependenciaExterna(dependencia.id)"
+                >
+                  Marcar resolvida
+                </button>
+              }
+              <button
+                class="botao pequeno"
+                type="button"
+                (click)="abrirFormularioExternaEdicao(dependencia)"
+              >
+                Editar
+              </button>
+              <button
+                class="botao pequeno perigo"
+                type="button"
+                (click)="removerDependenciaExterna(dependencia.id)"
+              >
+                Remover
+              </button>
+            </div>
+          </li>
+        }
+      </ul>
+      @if (formularioExternaAberto()) {
+        <form class="formulario" (ngSubmit)="salvarDependenciaExterna()">
+          <label>
+            Titulo *
+            <input type="text" name="externaTitulo" [(ngModel)]="externaTitulo" required />
+          </label>
+          <label>
+            Descricao
+            <textarea name="externaDescricao" rows="2" [(ngModel)]="externaDescricao"></textarea>
+          </label>
+          <label>
+            Previsto para
+            <input type="date" name="externaPrevistoPara" [(ngModel)]="externaPrevistoPara" />
+          </label>
+          <div class="acoes-formulario">
+            <button class="botao primario" type="submit">
+              {{ externaEmEdicao() ? 'Salvar alteracoes' : 'Adicionar' }}
+            </button>
+            <button class="botao" type="button" (click)="cancelarFormularioExterna()">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      } @else {
+        <button class="botao" type="button" (click)="abrirFormularioExternaNova()">
+          + Dependencia externa
+        </button>
+      }
+
+      <h3>Notas</h3>
+      @if (tarefa.notas.length === 0) {
+        <p class="vazio">Nenhuma nota cadastrada.</p>
+      }
+      <ul class="lista-notas">
+        @for (nota of tarefa.notas; track nota.id) {
+          <li>
+            <p>{{ nota.texto }}</p>
+            <small>{{ nota.criadoEm | date: 'dd/MM/yyyy HH:mm' }}</small>
+          </li>
+        }
+      </ul>
+      <div class="grupo-nota">
+        <textarea
+          rows="2"
+          placeholder="Escreva uma nota..."
+          [(ngModel)]="textoNota"
+        ></textarea>
+        <button class="botao" type="button" (click)="adicionarNota()">Adicionar nota</button>
+      </div>
+    } @else {
+      <p class="vazio destaque">Selecione uma tarefa na lista para ver os detalhes.</p>
+    }
+  </section>
+</main>

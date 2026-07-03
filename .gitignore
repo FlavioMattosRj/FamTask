@@ -1,0 +1,22 @@
+# Maven / Java build outputs
+/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Angular / Node build outputs
+/frontend/dist/
+/frontend/node_modules/
+/frontend/.angular/
+
+# Logs and local databases
+*.log
+*.db
+
+# IDE and OS files
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db

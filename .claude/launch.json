@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tarefas-benchmark",
+      "runtimeExecutable": "java",
+      "runtimeArgs": ["-jar", "target/tarefas-benchmark.jar", "--app.abrirNavegador=false"],
+      "port": 8080
+    }
+  ]
+}
