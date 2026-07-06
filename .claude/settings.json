@@ -11,7 +11,8 @@
       "Read(//c/Program Files/nodejs/node_modules/npm/docs/content/commands/**)",
       "Bash(cd /d/FamTask && find ~/.m2 .buildcache -iname \"mockito-core-*.jar\" 2>/dev/null | head -5; grep -n \"spring-boot-starter-test\\\\|<build>\\\\|<plugins>\\\\|surefire\" pom.xml)",
       "Read(//c/Users/flavi/.m2/**)",
-      "Bash(rm -f .buildlog.txt && git status --porcelain)"
+      "Bash(rm -f .buildlog.txt && git status --porcelain)",
+      "PowerShell(& \"c:\\\\FamTask\\\\scripts\\\\build-benchmark.ps1\")"
     ],
     "additionalDirectories": [
       "D:\\FamTask"

@@ -38,14 +38,22 @@ function Invoke-BuildBenchmark {
     # variaveis de ambiente do processo pai, entao basta setar aqui antes do "mvn".
     $env:npm_config_cache = $cacheNpm
 
+    $logBuild = Join-Path $ProjectRoot ".buildcache\ultimo-build.log"
+
     Write-Host "Repositorio local do Maven: $repositorioMaven"
     Write-Host "Cache do npm:               $cacheNpm"
+    Write-Host "Log do build:               $logBuild"
 
     Push-Location $ProjectRoot
     try {
-        & mvn clean package "-Dmaven.repo.local=$repositorioMaven"
+        # -q/-B deixam o Maven o mais silencioso possivel (sem log de download de
+        # dependencias nem barra de progresso), e a saida remanescente e redirecionada
+        # para arquivo em vez do console: assim o tempo medido reflete o trabalho real
+        # de build (compilacao, IO em disco etc.) e nao o custo de renderizar texto no
+        # terminal, que e independente do sistema de arquivos sendo comparado.
+        & mvn -q -B clean package "-Dmaven.repo.local=$repositorioMaven" *> $logBuild
         if ($LASTEXITCODE -ne 0) {
-            throw "mvn clean package falhou (exit code $LASTEXITCODE)"
+            throw "mvn clean package falhou (exit code $LASTEXITCODE). Veja o log em: $logBuild"
         }
     }
     finally {

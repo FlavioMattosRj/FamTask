@@ -78,6 +78,7 @@
                                 <argument>install</argument>
                                 <argument>--no-audit</argument>
                                 <argument>--no-fund</argument>
+                                <argument>--loglevel=error</argument>
                             </arguments>
                         </configuration>
                     </execution>
@@ -93,6 +94,7 @@
                             <arguments>
                                 <argument>run</argument>
                                 <argument>build</argument>
+                                <argument>--silent</argument>
                             </arguments>
                         </configuration>
                     </execution>
